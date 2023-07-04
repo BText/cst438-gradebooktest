@@ -1,5 +1,6 @@
 package com.cst438.controllers;
 
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,11 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -42,6 +45,8 @@ public class GradeBookController {
 	
 	@Autowired
 	RegistrationService registrationService;
+	
+
 	
 	// get assignments for an instructor that need grading
 	@GetMapping("/gradebook")
@@ -97,7 +102,7 @@ public class GradeBookController {
 		// check that this request is from the course instructor 
 		String email = "dwisneski@csumb.edu";  // user name (should be instructor's email) 
 		
-		Course c = courseRepository.findById(course_id).orElse(null);
+		Course c = courseRepository.findCourseId(course_id);
 		if (!c.getInstructor().equals(email)) {
 			throw new ResponseStatusException( HttpStatus.UNAUTHORIZED, "Not Authorized. " );
 		}
@@ -156,7 +161,8 @@ public class GradeBookController {
 		
 	}
 	
-	private Assignment checkAssignment(int assignmentId, String email) {
+	private Assignment checkAssignment(int assignmentId, String email) 
+	{
 		// get assignment 
 		Assignment assignment = assignmentRepository.findById(assignmentId).orElse(null);
 		if (assignment == null) {
@@ -169,5 +175,61 @@ public class GradeBookController {
 		
 		return assignment;
 	}
+	
+	
+   @PostMapping("/assignment")
+   @Transactional
+   public void makeAssignment (@RequestParam Course courseID, @RequestParam String name, @RequestParam Date dueDate) 
+   {
+      
+      Assignment assignment = new Assignment();
+      assignment.setName(name);
+      assignment.setDueDate(dueDate);
+      assignment.setCourse(courseID);
+      assignmentRepository.save(assignment);
+      }
+   
+   
+   @PutMapping("/assignment/{assignmentId}")
+   @Transactional
+   public void changeAssignmentName(@PathVariable int assignmentId, @RequestParam String name) 
+   {
+      
+      String email = "dwisneski@csumb.edu";
+      Assignment assignment = checkAssignment(assignmentId,email);
+      
+      if(assignment == null) 
+      {
+         throw new ResponseStatusException( HttpStatus.BAD_REQUEST, "Assignment not found " );
+      }
+      
+      else 
+      {
+        
+      assignment.setName(name);      
+      assignmentRepository.save(assignment);
+      
+      }
+   }
+
+
+   @DeleteMapping("/assignment/{assignmentId}")
+   @Transactional
+   public void removeAssignment(@PathVariable int assignmentId) 
+   {
+      
+      String email = "dwisneski@csumb.edu";
+      Assignment assignment = checkAssignment(assignmentId,email);
+      
+      if(assignment.getNeedsGrading() == 0) 
+      {
+         assignmentRepository.delete(assignment);
+      } 
+      else 
+      {
+         throw  new ResponseStatusException( HttpStatus.BAD_REQUEST, "Assignments already graded");
+      }
+      
+   }
 
 }
