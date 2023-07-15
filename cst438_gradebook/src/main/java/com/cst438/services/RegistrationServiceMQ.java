@@ -44,7 +44,13 @@ public class RegistrationServiceMQ extends RegistrationService {
 	@Transactional
 	public void receive(EnrollmentDTO enrollmentDTO) {
 		
-		//TODO  complete this method in homework 4
+		Enrollment enrollment = new Enrollment();
+		Course couse = courseRepository.findCourseId(enrollmentDTO.course_id);
+		
+		enrollment.setCourse(couse);
+		enrollment.setStudentEmail(enrollmentDTO.studentEmail);
+		enrollment.setStudentName(enrollmentDTO.studentName);
+		enrollmentRepository.save(enrollment);
 		
 	}
 
@@ -52,7 +58,8 @@ public class RegistrationServiceMQ extends RegistrationService {
 	@Override
 	public void sendFinalGrades(int course_id, CourseDTOG courseDTO) {
 		 
-		//TODO  complete this method in homework 4
+		courseDTO.course_id = course_id;
+		rabbitTemplate.convertAndSend(registrationQueue.getName(),courseDTO);
 		
 	}
 
