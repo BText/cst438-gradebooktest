@@ -177,15 +177,17 @@ public class GradeBookController {
 	}
 	
 	
+
+   
    @PostMapping("/assignment")
    @Transactional
-   public void makeAssignment (@RequestParam Course courseID, @RequestParam String name, @RequestParam Date dueDate) 
+   public void makeAssignment (@RequestParam String courseID, @RequestParam String name, @RequestParam Date dueDate) 
    {
       
       Assignment assignment = new Assignment();
       assignment.setName(name);
       assignment.setDueDate(dueDate);
-      assignment.setCourse(courseID);
+      assignment.setCourse(courseRepository.findCourseId(Integer.parseInt(courseID)));
       assignmentRepository.save(assignment);
       }
    
